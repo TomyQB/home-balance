@@ -34,18 +34,26 @@ const renderChart = () => {
   }
 
   chartInstance = new ChartJS(chartCanvas.value.getContext('2d'), {
-    type: 'doughnut',
-    data: props.chartData,
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false, // Ocultar la leyenda predeterminada de Chart.js
+  type: 'doughnut',
+  data: props.chartData,
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false, // Ocultar la leyenda predeterminada de Chart.js
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            const value = context.raw; // Obtiene el valor del dataset
+            return `${value}€`; // Agrega el símbolo de euro
+          },
         },
       },
     },
-  })
+  },
+});
 
   // Crear la leyenda personalizada
   const total = props.chartData.datasets[0].data.reduce((sum, value) => sum + value, 0)
