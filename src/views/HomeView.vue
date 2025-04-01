@@ -1,4 +1,4 @@
- <!-- Commit deploy -->
+ <!-- Commit deployy -->
 <script setup>
 import { ref, onMounted } from 'vue'
 import Footer from '../components/Footer.vue'
