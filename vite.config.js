@@ -12,7 +12,15 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+  },
+  build: {
+    rollupOptions: {
+      external: [], // No excluir `chart.js`
+    },
+  },
+  optimizeDeps: {
+    include: ['chart.js'], // Asegúrate de que `chart.js` se incluya en las dependencias optimizadas
   },
 })
