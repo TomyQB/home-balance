@@ -107,32 +107,32 @@ onMounted(() => {
       <!-- Mostrar el importe en el tercio superior -->
       <h1
         v-if="amount !== null"
-        class="absolute text-4xl font-bold"
-        style="top: 33%; transform: translateY(-50%);"
+        class="absolute text-3xl font-bold"
+        style="top: 20%; transform: translateY(-50%);"
       >
         {{ amount }} €
       </h1>
 
       <!-- Input numérico más pequeño y centrado -->
       <div
-        class="absolute flex items-center w-[20%] max-w-[120px] border-b border-gray-300"
-        style="top: 60%; transform: translateY(-50%);"
+        class="absolute flex items-center w-[30%] max-w-[100px] border-b border-gray-300"
+        style="top: 40%; transform: translateY(-50%);"
       >
         <input
           v-model="inputAmount"
           type="number"
           placeholder="0"
-          class="w-full p-2 text-right outline-none"
+          class="w-full p-1 text-right outline-none"
         />
-        <span class="ml-2 text-gray-500">€</span>
+        <span class="ml-1 text-gray-500">€</span>
       </div>
 
       <!-- Desplegable en el tercio inferior -->
       <select
         v-if="expenseTypes.length > 0"
         v-model="selectedExpenseType"
-        class="absolute border border-gray-300 rounded p-2 w-[90%] max-w-xl"
-        style="top: 70%; transform: translateY(-50%);"
+        class="absolute border border-gray-300 rounded p-1 w-[80%] max-w-md"
+        style="top: 55%; transform: translateY(-50%);"
       >
         <option value="" disabled>Selecciona un tipo de gasto</option>
         <option v-for="type in expenseTypes" :key="type" :value="type">
@@ -143,8 +143,8 @@ onMounted(() => {
       <!-- Botón para añadir gasto -->
       <button
         @click="addExpense"
-        class="absolute bg-green-500 text-white px-4 py-2 rounded w-[90%] max-w-xl"
-        style="top: 80%; transform: translateY(-50%);"
+        class="absolute bg-green-500 text-white px-3 py-1 rounded w-[80%] max-w-md"
+        style="top: 70%; transform: translateY(-50%);"
       >
         Añadir gasto
       </button>
@@ -155,4 +155,4 @@ onMounted(() => {
       @close="handleModalClose"
     />
   </div>
-</template> 
+</template>
