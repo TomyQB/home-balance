@@ -6,12 +6,30 @@ body {
   height: 100%;
   overflow-x: hidden; /* Evita el scroll horizontal */
   overflow-y: auto; /* Permite el scroll vertical solo si es necesario */
+  touch-action: manipulation; /* Evita movimientos no deseados en dispositivos táctiles */
 }
 
 #app {
   min-height: 100vh; /* Asegura que el contenido ocupe toda la altura de la pantalla */
   display: flex;
   flex-direction: column;
-  padding-bottom: 4rem; /* Deja espacio para el Footer (ajusta según la altura del Footer) */
+  padding-bottom: 5rem; /* Deja espacio para el Footer */
   box-sizing: border-box; /* Incluye el padding en el cálculo del tamaño */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* Asegura que el padding y el borde no causen desbordamientos */
+}
+
+img,
+canvas {
+  max-width: 100%; /* Asegura que las imágenes y canvas no excedan el ancho */
+  height: auto;
+}
+
+.container {
+  max-width: 100%; /* Asegura que los contenedores no excedan el ancho */
+  overflow-x: hidden;
 }
