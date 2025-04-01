@@ -1,13 +1,12 @@
 <template>
   <div class="min-h-screen flex flex-col">
-    <main class="flex-grow flex flex-col items-center justify-center gap-8">
+    <main class="flex-grow flex flex-col items-center gap-8 pt-8">
       <h1 class="text-2xl font-bold">Balance Mensual</h1>
 
       <!-- Gráfico circular -->
       <div v-if="chartData" class="w-[90%] max-w-md">
         <DoughnutChart :chart-data="chartData" />
       </div>
-      
     </main>
     <Footer />
   </div>
