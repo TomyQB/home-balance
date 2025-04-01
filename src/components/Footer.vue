@@ -1,5 +1,5 @@
 <template>
-  <footer class="flex justify-between items-center border-t border-gray-300 p-4 fixed bottom-0 w-full bg-white">
+  <footer class="footer">
     <!-- Inicio -->
     <router-link to="/" class="flex flex-col items-center justify-center w-1/3">
       <span>🏠</span>
@@ -25,10 +25,17 @@ import { RouterLink } from 'vue-router'
 </script>
 
 <style scoped>
-footer {
-  z-index: 10;
+.footer {
+  position: fixed; /* Fija el footer en la parte inferior */
+  bottom: 0;
+  left: 0;
+  width: 100%; /* Asegura que ocupe todo el ancho */
+  background-color: white; /* Fondo blanco para que sea visible */
+  border-top: 1px solid #ccc; /* Línea superior para separar el footer */
+  z-index: 10; /* Asegura que esté por encima de otros elementos */
   display: flex;
   align-items: center;
   justify-content: space-between; /* Distribuye los elementos entre los extremos */
+  padding: 1rem; /* Espaciado interno */
 }
 </style>
