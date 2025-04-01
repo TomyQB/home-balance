@@ -11,4 +11,6 @@ body {
   min-height: 100vh; /* Asegura que el contenido ocupe toda la altura de la pantalla */
   display: flex;
   flex-direction: column;
+  padding-bottom: 5rem; /* Deja espacio para el Footer (ajusta según la altura del Footer) */
+  box-sizing: border-box; /* Incluye el padding en el cálculo del tamaño */
 }
