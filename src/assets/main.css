@@ -5,12 +5,13 @@ body {
   width: 100%;
   height: 100%;
   overflow-x: hidden; /* Evita el scroll horizontal */
+  overflow-y: auto; /* Permite el scroll vertical solo si es necesario */
 }
 
 #app {
   min-height: 100vh; /* Asegura que el contenido ocupe toda la altura de la pantalla */
   display: flex;
   flex-direction: column;
-  padding-bottom: 5rem; /* Deja espacio para el Footer (ajusta según la altura del Footer) */
+  padding-bottom: 4rem; /* Deja espacio para el Footer (ajusta según la altura del Footer) */
   box-sizing: border-box; /* Incluye el padding en el cálculo del tamaño */
 }
