@@ -1,5 +1,6 @@
 <template>
   <div class="min-h-screen flex flex-col">
+    <Header />
     <main class="flex-grow flex flex-col items-center gap-8 pt-8">
       <h1 class="text-2xl font-bold">Balance Mensual</h1>
 
@@ -14,11 +15,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import Footer from '../components/Footer.vue'
+import Header from '../../components/Header.vue'
+import Footer from '../../components/Footer.vue'
 import { collection, query, where, getDocs } from 'firebase/firestore'
-import { db } from '../firebase'
-import DoughnutChart from '../components/DoughnutChart.vue'
-import { useDateStore } from '../stores/useDateStore'
+import { db } from '../../firebase'
+import DoughnutChart from '../../components/DoughnutChart.vue'
+import { useDateStore } from '../../stores/useDateStore'
 
 const chartData = ref(null) // Datos para el gráfico circular
 const dateStore = useDateStore()

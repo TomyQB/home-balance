@@ -1,7 +1,7 @@
 <template>
     <div v-if="isVisible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <div class="bg-white p-6 rounded shadow-lg w-80">
-        <h2 class="text-lg font-bold mb-4">¿Cuánto has cobrado este mes?</h2>
+        <h2 class="text-lg font-bold mb-4">¿Cuánto has ganado este mes?</h2>
         <input
           v-model="amount"
           type="number"
@@ -21,8 +21,8 @@
   <script setup>
   import { ref } from 'vue'
   import { collection, addDoc } from 'firebase/firestore'
-  import { db } from '../../firebase'
-  import { useDateStore } from '../../stores/useDateStore'
+  import { db } from '../../../firebase'
+  import { useDateStore } from '../../../stores/useDateStore'
   
   const props = defineProps({
     isVisible: Boolean, // Prop para controlar la visibilidad del modal

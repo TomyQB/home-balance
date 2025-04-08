@@ -1,11 +1,12 @@
- <!-- Commit deployy -->
+<!-- filepath: c:\Users\TMONTALVOT-local\Downloads\Tomas\home-balance\src\views\HomeView.vue -->
 <script setup>
-import { ref, onMounted } from 'vue'
-import Footer from '../components/Footer.vue'
-import MonthlyBalanceModal from '../views/modal/MonthlyBalanceModal.vue'
-import { useDateStore } from '../stores/useDateStore'
+import { ref, onMounted, computed } from 'vue'
+import Header from '../../components/Header.vue'
+import Footer from '../../components/Footer.vue'
+import MonthlyBalanceModal from '../home/modal/MonthlyBalanceModal.vue'
+import { useDateStore } from '../../stores/useDateStore'
 import { collection, addDoc, query, where, getDocs, orderBy, updateDoc } from 'firebase/firestore'
-import { db } from '../firebase'
+import { db } from '../../firebase'
 
 const isModalVisible = ref(false) // Variable local para controlar el modal
 const amount = ref(null) // Variable para almacenar el valor de amount
@@ -13,6 +14,12 @@ const expenseTypes = ref([]) // Variable para almacenar los tipos de gastos
 const selectedExpenseType = ref('') // Variable para almacenar el tipo de gasto seleccionado
 const inputAmount = ref('') // Variable para almacenar el valor del input numérico
 const dateStore = useDateStore()
+
+// Computed para mostrar la fecha en formato MM/YYYY
+const formattedDate = computed(() => {
+  const month = dateStore.month.toString().padStart(2, '0') // Asegura que el mes tenga dos dígitos
+  return `${month}/${dateStore.year}`
+})
 
 const checkMonthlyBalance = async () => {
   try {
@@ -101,15 +108,23 @@ onMounted(() => {
   fetchExpenseTypes()
 })
 </script>
-
 <template>
   <div class="min-h-screen flex flex-col">
+    <Header />
     <main class="flex-grow flex items-center justify-center relative">
+      <!-- Mostrar la fecha en la esquina superior derecha -->
+      <h3
+        class="absolute text-xl font-semibold"
+        style="top: 15%; right: 5%; transform: translateY(-50%);"
+      >
+        {{ formattedDate }}
+      </h3>
+
       <!-- Mostrar el importe en el tercio superior -->
       <h1
         v-if="amount !== null"
         class="absolute text-3xl font-bold"
-        style="top: 20%; transform: translateY(-50%);"
+        style="top: 25%; transform: translateY(-50%);"
       >
         {{ amount }} €
       </h1>

@@ -1,5 +1,6 @@
 <template>
   <div class="min-h-screen flex flex-col">
+    <Header />
     <main class="flex-grow flex flex-col items-center justify-center gap-4">
       <input
         v-model="newExpenseType"
@@ -14,15 +15,16 @@
         Añadir
       </button>
     </main>
-    <Footer />
+    <FooterFarmacy />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import Footer from '../components/Footer.vue'
+import Header from '../../components/Header.vue'
+import FooterFarmacy from '../../components/FooterFarmacy.vue'
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore'
-import { db } from '../firebase'
+import { db } from '../../firebase'
 
 const newExpenseType = ref('') // Variable para almacenar el valor del input
 
@@ -40,7 +42,7 @@ const addExpenseType = async () => {
 
   try {
     // Verificar si el tipo de gasto ya existe en la base de datos
-    const q = query(collection(db, 'expenseType'), where('name', '==', formattedExpenseType))
+    const q = query(collection(db, 'expenseFarmacyType'), where('name', '==', formattedExpenseType))
     const querySnapshot = await getDocs(q)
 
     if (!querySnapshot.empty) {
@@ -49,7 +51,7 @@ const addExpenseType = async () => {
     }
 
     // Añadir el nuevo tipo de gasto a la base de datos
-    await addDoc(collection(db, 'expenseType'), {
+    await addDoc(collection(db, 'expenseFarmacyType'), {
       name: formattedExpenseType, // Guardar el valor formateado en el campo 'name'
     })
 
