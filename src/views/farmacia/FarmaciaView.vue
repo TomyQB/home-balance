@@ -183,6 +183,7 @@ const addExpense = async () => {
       type: selectedExpenseType.value, // Tipo de gasto seleccionado
       month: dateStore.previousMonth, // Mes actual
       year: dateStore.previousYear, // Año actual
+      day: dateStore.day,
     })
 
     // Actualizar el balance mensual en la colección 'monthlyFarmacyBalance'
