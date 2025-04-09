@@ -66,6 +66,7 @@ const addExpense = async () => {
     await addDoc(collection(db, 'expenses'), {
       month: dateStore.month,
       year: dateStore.year,
+      day: dateStore.day,
       type: selectedExpenseType.value,
       amount: expenseAmount,
     })

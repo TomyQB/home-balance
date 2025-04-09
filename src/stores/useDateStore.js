@@ -4,12 +4,14 @@ export const useDateStore = defineStore('date', {
   state: () => ({
     month: null, // Mes actual
     year: null, // Año actual
+    day: null, // Dia actual
     previousMonth: null, // Mes anterior
     previousYear: null, // Año anterior
   }),
   actions: {
     initializeDate() {
       const now = new Date()
+      this.day = now.getDate()
       this.month = now.getMonth() + 1
       this.year = now.getFullYear()
 
