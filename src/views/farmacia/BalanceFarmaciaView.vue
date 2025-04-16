@@ -26,7 +26,7 @@
         </ul>
       </div>
     </main>
-    <Footer />
+    <FooterFarmacy />
   </div>
 </template>
 
