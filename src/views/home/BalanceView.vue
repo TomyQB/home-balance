@@ -54,7 +54,7 @@ const fetchExpenses = async () => {
       collection(db, 'expenses'),
       where('month', '==', dateStore.month),
       where('year', '==', dateStore.year),
-      orderBy('day', 'asc') // Ordenar por fecha ascendente
+      orderBy('day', 'desc') // Ordenar por fecha ascendente
     )
 
     const querySnapshot = await getDocs(q)
