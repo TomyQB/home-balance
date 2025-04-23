@@ -5,15 +5,18 @@ import Header from '../../components/Header.vue'
 import Footer from '../../components/Footer.vue'
 import MonthlyBalanceModal from '../home/modal/MonthlyBalanceModal.vue'
 import { useDateStore } from '../../stores/useDateStore'
-import { collection, addDoc, query, where, getDocs, orderBy, updateDoc } from 'firebase/firestore'
+import { useUserStore } from '../../stores/useUserStore'
+import { collection, addDoc, query, where, getDocs, orderBy, updateDoc, doc } from 'firebase/firestore'
 import { db } from '../../firebase'
 
 const isModalVisible = ref(false) // Variable local para controlar el modal
 const amount = ref(null) // Variable para almacenar el valor de amount
+const expenses = ref({}) // Almacena las sumas de importes negativos por banco
 const expenseTypes = ref([]) // Variable para almacenar los tipos de gastos
 const selectedExpenseType = ref('') // Variable para almacenar el tipo de gasto seleccionado
 const inputAmount = ref('') // Variable para almacenar el valor del input numérico
 const dateStore = useDateStore()
+const userStore = useUserStore()
 
 // Computed para mostrar la fecha en formato MM/YYYY
 const formattedDate = computed(() => {
@@ -26,7 +29,8 @@ const checkMonthlyBalance = async () => {
     const q = query(
       collection(db, 'monthlyBalance'),
       where('month', '==', dateStore.month),
-      where('year', '==', dateStore.year)
+      where('year', '==', dateStore.year),
+      where('userId', '==', userStore.user), // Filtrar por userId
     )
 
     const querySnapshot = await getDocs(q)
@@ -36,6 +40,7 @@ const checkMonthlyBalance = async () => {
       // Obtener el valor de amount del primer documento encontrado
       querySnapshot.forEach((doc) => {
         amount.value = doc.data().amount
+        calculateMonthlyBalance() // Calcular el balance mensual
       })
     }
   } catch (error) {
@@ -43,9 +48,49 @@ const checkMonthlyBalance = async () => {
   }
 }
 
+// Recuperar gastos desde Firestore
+const fetchExpenses = async () => {
+  try {
+    const q = query(
+      collection(db, 'expenses'),
+      where('month', '==', dateStore.month),
+      where('year', '==', dateStore.year),
+      where('userId', '==', userStore.user), // Filtrar por userId
+    )
+    const querySnapshot = await getDocs(q)
+    const typeData = {}
+    querySnapshot.forEach((docSnapshot) => {
+      const data = docSnapshot.data()
+      // Inicializar el tipo si no existe
+      if (!typeData[data.type]) {
+        typeData[data.type] = 0
+      }
+      // Sumar el importe al tipo correspondiente
+      typeData[data.type] += parseFloat(data.amount)
+    })
+    console.log('Datos de gastos recuperados:', typeData) // Depuración: Verificar los datos recuperados
+    expenses.value = typeData
+  } catch (error) {
+    console.error('Error al recuperar datos de los gastos desde Firestore:', error)
+  }
+}
+
+// Calcula la facturación mensual
+//Haz una función que dado el resultado de la facturación mensual guardada en la variable amount.value calcule de es facturación cuanto dinero queda si se aportan toda la lista de gastos en la variable expensesFarmacy.value
+// y lo muestre en la pantalla
+const calculateMonthlyBalance = () => {
+  const totalExpenses = Object.values(expenses.value).reduce((acc, value) => acc + parseFloat(value), 0)
+  const totalBalance = parseFloat(amount.value) - totalExpenses
+  amount.value = totalBalance.toFixed(2) // Actualizar el valor de balance
+}
+
 const fetchExpenseTypes = async () => {
   try {
-    const q = query(collection(db, 'expenseType'), orderBy('name')) // Ordenar alfabéticamente por el campo 'name'
+    const q = query(
+      collection(db, 'expenseType'),
+      where('userId', '==', userStore.user), // Filtrar por userId
+      orderBy('name') // Ordenar alfabéticamente por el campo 'name'
+    )
     const querySnapshot = await getDocs(q)
     expenseTypes.value = querySnapshot.docs.map((doc) => doc.data().name) // Extraer los nombres
   } catch (error) {
@@ -69,25 +114,10 @@ const addExpense = async () => {
       day: dateStore.day,
       type: selectedExpenseType.value,
       amount: expenseAmount,
+      userId: userStore.user, // Guardar el userId
     })
 
-    // Actualizar el balance mensual en la colección 'monthlyBalance'
-    const q = query(
-      collection(db, 'monthlyBalance'),
-      where('month', '==', dateStore.month),
-      where('year', '==', dateStore.year)
-    )
-    const querySnapshot = await getDocs(q)
-
-    if (!querySnapshot.empty) {
-      const docRef = querySnapshot.docs[0].ref // Obtener la referencia del documento
-      const currentAmount = querySnapshot.docs[0].data().amount
-      const updatedAmount = currentAmount - expenseAmount
-
-      await updateDoc(docRef, { amount: updatedAmount }) // Actualizar el campo 'amount'
-
-      amount.value = updatedAmount // Actualizar el valor en la pantalla
-    }
+    amount.value -= expenseAmount // Actualizar el balance
 
     alert('Gasto añadido correctamente.')
     inputAmount.value = '' // Limpiar el input después de añadir
@@ -102,12 +132,38 @@ const handleModalClose = () => {
   isModalVisible.value = false
   checkMonthlyBalance() // Volver a consultar Firestore después de cerrar el modal
 }
+const addUserIdToCollections = async () => {
+  const collections = [
+    // 'expenses',
+    // 'expensesFarmacy',
+    // 'monthlyBalance',
+  ]
+
+  try {
+    for (const collectionName of collections) {
+      const querySnapshot = await getDocs(collection(db, collectionName))
+      for (const document of querySnapshot.docs) {
+        const docRef = doc(db, collectionName, document.id)
+        await updateDoc(docRef, {
+          userId: 1, // Añadir el campo userId con valor 1
+        })
+        console.log(`Campo userId añadido al documento ${document.id} en la colección ${collectionName}`)
+      }
+    }
+    console.log('Todos los documentos han sido actualizados.')
+  } catch (error) {
+    console.error('Error al actualizar los documentos:', error)
+  }
+}
 
 // Ejecutar las búsquedas al cargar la vista
-onMounted(() => {
-  checkMonthlyBalance()
-  fetchExpenseTypes()
+onMounted(async () => {
+  await fetchExpenses() // Recuperar datos de los gastos
+  await fetchExpenseTypes() // Recuperar tipos de gastos
+  await checkMonthlyBalance() // Recuperar la facturación mensual
 })
+
+
 </script>
 <template>
   <div class="min-h-screen flex flex-col">

@@ -25,8 +25,10 @@ import Header from '../../components/Header.vue'
 import FooterFarmacy from '../../components/FooterFarmacy.vue'
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../../firebase'
+import { useUserStore } from '../../stores/useUserStore'
 
 const newExpenseType = ref('') // Variable para almacenar el valor del input
+const userStore = useUserStore()
 
 const capitalizeFirstLetter = (string) => {
   return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase()
@@ -42,7 +44,11 @@ const addExpenseType = async () => {
 
   try {
     // Verificar si el tipo de gasto ya existe en la base de datos
-    const q = query(collection(db, 'expenseFarmacyType'), where('name', '==', formattedExpenseType))
+    const q = query(
+      collection(db, 'expenseFarmacyType'),
+      where('name', '==', formattedExpenseType),
+      where('userId', '==', userStore.user), // Filtrar por userId
+    )
     const querySnapshot = await getDocs(q)
 
     if (!querySnapshot.empty) {
@@ -53,6 +59,7 @@ const addExpenseType = async () => {
     // Añadir el nuevo tipo de gasto a la base de datos
     await addDoc(collection(db, 'expenseFarmacyType'), {
       name: formattedExpenseType, // Guardar el valor formateado en el campo 'name'
+      userId: userStore.user, // Guardar el userId
     })
 
     newExpenseType.value = '' // Limpiar el input después de añadir

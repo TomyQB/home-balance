@@ -5,8 +5,8 @@ export const useDateStore = defineStore('date', {
     month: null, // Mes actual
     year: null, // Año actual
     day: null, // Dia actual
-    previousMonth: null, // Mes anterior
-    previousYear: null, // Año anterior
+    farmacyMonth: null, // Mes seleccionado en la farmacia
+    farmacyYear: null, // Año seleccionado en la farmacia
   }),
   actions: {
     initializeDate() {
@@ -14,15 +14,8 @@ export const useDateStore = defineStore('date', {
       this.day = now.getDate()
       this.month = now.getMonth() + 1
       this.year = now.getFullYear()
-
-      // Calcular el mes y el año anterior
-      if (this.month === 1) {
-        this.previousMonth = 12
-        this.previousYear = this.year - 1
-      } else {
-        this.previousMonth = this.month - 1
-        this.previousYear = this.year
-      }
+      this.farmacyMonth = this.month
+      this.farmacyYear = this.year
     },
   },
 })

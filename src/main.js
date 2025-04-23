@@ -6,6 +6,7 @@ import { createPinia } from 'pinia'
 import { VueFire, VueFireAuth } from 'vuefire'
 import { app as firebaseApp } from './firebase' // Importa la instancia de Firebase App
 import { useDateStore } from './stores/useDateStore'
+import { useUserStore } from './stores/useUserStore'
 
 import App from './App.vue'
 import router from './router'
@@ -21,5 +22,7 @@ app.use(router)
 
 const dateStore = useDateStore()
 dateStore.initializeDate()
+const user = useUserStore()
+user.initializeUser()
 
 app.mount('#app')

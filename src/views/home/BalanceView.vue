@@ -38,10 +38,12 @@ import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
 import { db } from '../../firebase'
 import DoughnutChart from '../../components/DoughnutChart.vue'
 import { useDateStore } from '../../stores/useDateStore'
+import { useUserStore } from '../../stores/useUserStore'
 
 const chartData = ref(null) // Datos para el gráfico circular
 const expenses = ref([]) // Lista de gastos
 const dateStore = useDateStore()
+const userStore = useUserStore()
 
 // Computed para ordenar los gastos por fecha (del día 1 hacia arriba)
 const sortedExpenses = computed(() => {
@@ -54,6 +56,7 @@ const fetchExpenses = async () => {
       collection(db, 'expenses'),
       where('month', '==', dateStore.month),
       where('year', '==', dateStore.year),
+      where('userId', '==', userStore.user), // Filtrar por userId
       orderBy('day', 'desc') // Ordenar por fecha ascendente
     )
 

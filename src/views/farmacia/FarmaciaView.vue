@@ -3,18 +3,32 @@
   <div class="min-h-screen flex flex-col">
     <Header />
     <main class="flex-grow flex flex-col items-center justify-center relative">
-      <!-- Mostrar la fecha en la esquina superior derecha -->
-      <h3
-        class="absolute text-xl font-semibold"
-        style="top: 15%; right: 5%; transform: translateY(-50%);"
-      >
-        {{ formattedDate }}
-      </h3>
+      <!-- Selects para modificar la fecha -->
+      <div class="absolute flex gap-2 items-center" style="top: 10%; right: 5%;">
+        <select v-model="selectedMonth" class="border border-gray-300 rounded p-1">
+          <option v-for="month in 12" :key="month" :value="month">
+            {{ month }}
+          </option>
+        </select>
+        <select v-model="selectedYear" class="border border-gray-300 rounded p-1">
+          <option v-for="year in [2025, 2026, 2027, 2028, 2029, 2030]" :key="year" :value="year">
+            {{ year }}
+          </option>
+        </select>
+      </div>
 
       <!-- Mostrar el importe en el centro -->
-      <h1 v-if="amount !== null" class="text-3xl font-bold">
-        Facturación: {{ amount }} €
+      <h1 v-if="farmacyBalance !== null" class="text-3xl font-bold">
+        Balance: {{ farmacyBalance }} €
       </h1>
+
+      <!-- Botón para añadir facturación -->
+      <button
+        @click="handleModalOpen"
+        class="bg-green-500 text-white px-3 py-1 rounded w-[80%] max-w-md mt-4"
+      >
+        Añadir facturación
+      </button>
 
       <!-- Área de drag and drop -->
       <div
@@ -81,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import * as XLSX from 'xlsx' // Importar la librería xlsx
 import Header from '../../components/Header.vue'
 import FooterFarmacy from '../../components/FooterFarmacy.vue'
@@ -89,13 +103,15 @@ import MonthlyFarmacyBalanceModal from '../farmacia/modal/MonthlyFarmacyBalanceM
 import { collection, query, where, getDocs, addDoc, updateDoc, orderBy } from 'firebase/firestore'
 import { db } from '../../firebase'
 import { useDateStore } from '../../stores/useDateStore'
+import { useUserStore } from '../../stores/useUserStore'
 
 const isModalVisible = ref(false) // Controla la visibilidad del modal
-const amount = ref(null) // Almacena el valor de la facturación del mes anterior
-const typeSums = ref({}) // Almacena las sumas de importes negativos por banco
+const farmacyBalance = ref(null) // Almacena el valor de la facturación del mes anterior
+const expensesFarmacy = ref({}) // Almacena las sumas de importes negativos por banco
 
 // Acceder al store de fechas
 const dateStore = useDateStore()
+const userStore = useUserStore()
 
 // Variables para el input y el desplegable
 const inputAmount = ref('') // Almacena el importe ingresado
@@ -106,60 +122,81 @@ const selectedExpenseType = ref('') // Almacena el tipo de gasto seleccionado
 const selectedFile = ref(null)
 const fileInput = ref(null) // Referencia al input de archivo
 
-// Computed para mostrar la fecha del mes anterior en formato MM/YYYY
-const formattedDate = computed(() => {
-  const month = dateStore.previousMonth.toString().padStart(2, '0') // Asegura que el mes tenga dos dígitos
-  return `${month}/${dateStore.previousYear}`
-})
+// Variables para los selects de mes y año
+const selectedMonth = ref(dateStore.farmacyMonth)
+const selectedYear = ref(dateStore.farmacyYear)
+
+// Función para actualizar la fecha en el store y consultar la base de datos
+const updateDateAndFetchData = async () => {
+  dateStore.farmacyMonth = selectedMonth.value
+  dateStore.farmacyYear = selectedYear.value
+  await fetchExpenses()
+  await fetchExpenseTypes()
+  await checkMonthlyFarmacyBalance()
+}
 
 // Recuperar la facturación mensual desde Firestore
 const checkMonthlyFarmacyBalance = async () => {
   try {
+    console.log('farmacyMonth:', dateStore.farmacyMonth)
+    console.log('farmacyYear:', dateStore.farmacyYear)
     const q = query(
       collection(db, 'monthlyFarmacyBalance'),
-      where('month', '==', dateStore.previousMonth),
-      where('year', '==', dateStore.previousYear)
+      where('month', '==', dateStore.farmacyMonth),
+      where('year', '==', dateStore.farmacyYear),
+      where('userId', '==', userStore.user), // Filtrar por userId
     )
 
-  const querySnapshot = await getDocs(q)
-  if (querySnapshot.empty) {
-    isModalVisible.value = true // Mostrar el modal si no hay registros
-  } else {
-    // Obtener el valor de amount del primer documento encontrado
-    querySnapshot.forEach((doc) => {
-      amount.value = doc.data().amount
-    })
-  }
+    const querySnapshot = await getDocs(q)
+    if (!querySnapshot.empty) {
+      querySnapshot.forEach((doc) => {
+        farmacyBalance.value = doc.data().amount
+        calculateMonthlyBalance() // Calcular el balance mensual
+      })
+    } else {
+      farmacyBalance.value = 0 // Si no hay datos, inicializar en 0
+      calculateMonthlyBalance() // Calcular el balance mensual
+    }
   } catch (error) {
-  console.error('Error al consultar Firestore:', error)
+    console.error('Error al consultar la facturación mensual:', error)
   }
 }
 
-// Recuperar datos de los bancos desde Firestore
-const fetchTypeData = async () => {
+// Recuperar gastos desde Firestore
+const fetchExpenses = async () => {  
   try {
     const q = query(
       collection(db, 'expensesFarmacy'),
-      where('month', '==', dateStore.previousMonth),
-      where('year', '==', dateStore.previousYear)
+      where('month', '==', dateStore.farmacyMonth),
+      where('year', '==', dateStore.farmacyYear),
+      where('userId', '==', userStore.user), // Filtrar por userId
     )
     const querySnapshot = await getDocs(q)
     const typeData = {}
     querySnapshot.forEach((docSnapshot) => {
       const data = docSnapshot.data()
-      typeData[data.type] = data.amount.toFixed(2)
+      // Inicializar el tipo si no existe
+      if (!typeData[data.type]) {
+        typeData[data.type] = 0
+      }
+      // Sumar el importe al tipo correspondiente
+      typeData[data.type] += parseFloat(data.amount)
     })
-
-    typeSums.value = typeData
+    console.log('Datos de gastos recuperados:', typeData) // Depuración: Verificar los datos recuperados
+    expensesFarmacy.value = typeData
   } catch (error) {
-    console.error('Error al recuperar datos de los bancos desde Firestore:', error)
+    console.error('Error al recuperar datos de los gastos desde Firestore:', error)
   }
 }
 
 // Recuperar tipos de gastos desde Firestore
 const fetchExpenseTypes = async () => {
   try {
-    const q = query(collection(db, 'expenseFarmacyType'), orderBy('name')) // Ordenar alfabéticamente por el campo 'name'
+    const q = query(
+      collection(db, 'expenseFarmacyType'),
+      where('userId', '==', userStore.user), // Filtrar por userId
+      orderBy('name')
+    ) // Ordenar alfabéticamente por el campo 'name'
     const querySnapshot = await getDocs(q)
     expenseTypes.value = querySnapshot.docs.map((doc) => doc.data().name) // Extraer los nombres
   } catch (error) {
@@ -181,28 +218,13 @@ const addExpense = async () => {
     await addDoc(collection(db, 'expensesFarmacy'), {
       amount: expenseAmount, // Importe del gasto
       type: selectedExpenseType.value, // Tipo de gasto seleccionado
-      month: dateStore.previousMonth, // Mes actual
-      year: dateStore.previousYear, // Año actual
+      month: dateStore.farmacyMonth, // Mes actual
+      year: dateStore.farmacyYear, // Año actual
       day: dateStore.day,
+      userId: userStore.user, // Guardar el userId
     })
 
-    // Actualizar el balance mensual en la colección 'monthlyFarmacyBalance'
-    const q = query(
-      collection(db, 'monthlyFarmacyBalance'),
-      where('month', '==', dateStore.previousMonth),
-      where('year', '==', dateStore.previousYear)
-    )
-    const querySnapshot = await getDocs(q)
-
-    if (!querySnapshot.empty) {
-      const docRef = querySnapshot.docs[0].ref // Obtener la referencia del documento
-      const currentAmount = querySnapshot.docs[0].data().amount
-      const updatedAmount = currentAmount - expenseAmount
-
-      await updateDoc(docRef, { amount: updatedAmount }) // Actualizar el campo 'amount'
-
-      amount.value = updatedAmount // Actualizar el valor en la pantalla
-    }
+    farmacyBalance.value -= expenseAmount.toFixed(2) // Actualizar el balance
 
     alert('Gasto añadido correctamente.')
     inputAmount.value = '' // Limpiar el input después de añadir
@@ -211,6 +233,10 @@ const addExpense = async () => {
     console.error('Error al añadir el gasto o actualizar el balance:', error)
     alert('Hubo un error al añadir el gasto o actualizar el balance.')
   }
+}
+
+const handleModalOpen = () => {
+  isModalVisible.value = true
 }
 
 // Manejar drag and drop
@@ -281,19 +307,8 @@ const processFile = (file) => {
       // Redondear la suma a 2 decimales
       const negativeSum = Math.abs(negativeValues.reduce((sum, value) => sum + value, 0).toFixed(2))
 
-      // Actualizar las sumas por banco
-      typeSums.value = {
-        ...typeSums.value,
-        [type]: negativeSum,
-      }
-
       // Guardar en Firestore si no existe
       saveTypeDataIfNotExists(type, negativeSum)
-
-      // Actualizar la facturación en Firestore
-      updateMonthlyFarmacyBalance(negativeSum)
-
-      console.log('Suma de importes negativos por banco:', typeSums.value) // Depuración
     }
     reader.readAsArrayBuffer(file)
   } else {
@@ -318,20 +333,26 @@ const saveTypeDataIfNotExists = async (type, amount) => {
   try {
     const q = query(
       collection(db, 'expensesFarmacy'),
-      where('month', '==', dateStore.previousMonth),
-      where('year', '==', dateStore.previousYear),
-      where('type', '==', type)
+      where('month', '==', dateStore.farmacyMonth),
+      where('year', '==', dateStore.farmacyYear),
+      where('amount', '==', amount),
+      where('type', '==', type),
+      where('userId', '==', userStore.user), // Filtrar por userId
     )
 
     const querySnapshot = await getDocs(q)
     if (querySnapshot.empty) {
       await addDoc(collection(db, 'expensesFarmacy'), {
-        month: dateStore.previousMonth,
-        year: dateStore.previousYear,
+        month: dateStore.farmacyMonth,
+        year: dateStore.farmacyYear,
         type,
+        day: dateStore.day,
         amount: parseFloat(amount),
+        userId: userStore.user, // Guardar el userId
       })
       console.log(`Datos guardados para el banco ${type}: ${amount} €`)
+
+      farmacyBalance.value -= amount.toFixed(2) // Actualizar el balance
     } else {
       console.log(`Ya existen datos para el banco ${type} en este mes y año.`)
     }
@@ -340,30 +361,14 @@ const saveTypeDataIfNotExists = async (type, amount) => {
   }
 }
 
-// Actualizar la facturación en Firestore
-const updateMonthlyFarmacyBalance = async (negativeSum) => {
-  try {
-    const q = query(
-      collection(db, 'monthlyFarmacyBalance'),
-      where('month', '==', dateStore.previousMonth),
-      where('year', '==', dateStore.previousYear)
-    )
-
-    const querySnapshot = await getDocs(q)
-    if (!querySnapshot.empty) {
-      querySnapshot.forEach(async (docSnapshot) => {
-        const docRef = docSnapshot.ref
-        const currentAmount = docSnapshot.data().amount || 0
-        const updatedAmount = parseFloat(currentAmount) - parseFloat(negativeSum)
-
-        await updateDoc(docRef, { amount: updatedAmount.toFixed(2) })
-        amount.value = updatedAmount.toFixed(2)
-        console.log(`Facturación actualizada: ${updatedAmount} €`)
-      })
-    }
-  } catch (error) {
-    console.error('Error al actualizar la facturación en Firestore:', error)
-  }
+// Calcula la facturación mensual
+//Haz una función que dado el resultado de la facturación mensual guardada en la variable amount.value calcule de es facturación cuanto dinero queda si se aportan toda la lista de gastos en la variable expensesFarmacy.value
+// y lo muestre en la pantalla
+const calculateMonthlyBalance = () => {
+  const totalExpenses = Object.values(expensesFarmacy.value).reduce((acc, value) => acc + parseFloat(value), 0)
+  console.log('Total de gastos:', totalExpenses) // Depuración: Verificar el total de gastos
+  const totalBalance = parseFloat(farmacyBalance.value) - totalExpenses
+  farmacyBalance.value = totalBalance.toFixed(2) // Actualizar el valor de farmacyBalance
 }
 
 const handleModalClose = () => {
@@ -373,11 +378,13 @@ const handleModalClose = () => {
 
 // Ejecutar las búsquedas al cargar la vista
 onMounted(async () => {
-  dateStore.initializeDate() // Inicializar las fechas en el store
-  await checkMonthlyFarmacyBalance() // Recuperar la facturación mensual
-  await fetchTypeData() // Recuperar datos de los bancos
+  await fetchExpenses() // Recuperar datos de los bancos
   await fetchExpenseTypes() // Recuperar tipos de gastos
+  await checkMonthlyFarmacyBalance() // Recuperar la facturación mensual
 })
+
+// Actualizar datos cuando cambien el mes o el año
+watch([selectedMonth, selectedYear], updateDateAndFetchData)
 </script>
 
 <style scoped>
