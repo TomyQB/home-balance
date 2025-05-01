@@ -23,6 +23,7 @@
   import { collection, addDoc } from 'firebase/firestore'
   import { db } from '../../../firebase'
   import { useDateStore } from '../../../stores/useDateStore'
+  import { useUserStore } from '../../../stores/useUserStore'
   
   const props = defineProps({
     isVisible: Boolean, // Prop para controlar la visibilidad del modal
@@ -32,6 +33,7 @@
   
   const amount = ref('')
   const dateStore = useDateStore()
+  const userStore = useUserStore()
   
   const saveMonthlyBalance = async () => {
     if (!amount.value) {
@@ -44,6 +46,7 @@
         month: dateStore.month,
         year: dateStore.year,
         amount: parseFloat(amount.value),
+        userId: userStore.user, // Guardar el userId
       })
       emit('close') // Emitir evento para cerrar el modal
     } catch (error) {
