@@ -352,7 +352,7 @@ const saveTypeDataIfNotExists = async (type, amount) => {
       })
       console.log(`Datos guardados para el banco ${type}: ${amount} €`)
 
-      farmacyBalance.value -= amount.toFixed(2) // Actualizar el balance
+      farmacyBalance.value = (farmacyBalance.value - amount).toFixed(2) // Actualizar el balance
     } else {
       console.log(`Ya existen datos para el banco ${type} en este mes y año.`)
     }
