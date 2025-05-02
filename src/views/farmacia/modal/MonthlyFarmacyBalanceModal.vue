@@ -30,6 +30,7 @@ import { ref, computed } from 'vue'
 import { collection, addDoc } from 'firebase/firestore'
 import { db } from '../../../firebase'
 import { useDateStore } from '../../../stores/useDateStore'
+import { useUserStore } from '../../../stores/useUserStore'
 
 const props = defineProps({
   isVisible: Boolean,
@@ -39,6 +40,7 @@ const emit = defineEmits(['close'])
 
 const monthlyAmount = ref('')
 const dateStore = useDateStore()
+const userStore = useUserStore()
 
 // Computed para formatear el mes como texto (opcional)
 const formattedMonth = computed(() => {
@@ -60,6 +62,7 @@ const saveMonthlyBalance = async () => {
       month: dateStore.farmacyMonth,
       year: dateStore.farmacyYear,
       amount: parseFloat(monthlyAmount.value),
+      userId: userStore.user, // Guardar el userId
     })
     emit('close')
   } catch (error) {
