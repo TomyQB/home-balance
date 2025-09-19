@@ -18,10 +18,26 @@ const inputAmount = ref('') // Variable para almacenar el valor del input numér
 const dateStore = useDateStore()
 const userStore = useUserStore()
 
-// Computed para mostrar la fecha en formato MM/YYYY
+// Opciones de mes y año para los selectores
+const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'))
+const currentYear = new Date().getFullYear()
+const years = [currentYear, currentYear + 1]
+
+// Estado local para los selectores de mes y año
+const selectedMonth = ref(dateStore.month ? dateStore.month.toString().padStart(2, '0') : months[0])
+const selectedYear = ref(dateStore.year ? dateStore.year : currentYear)
+
+// Computed para mostrar la fecha seleccionada en formato MM/YYYY
 const formattedDate = computed(() => {
-  const month = dateStore.month.toString().padStart(2, '0') // Asegura que el mes tenga dos dígitos
-  return `${month}/${dateStore.year}`
+  return `${selectedMonth.value}/${selectedYear.value}`
+})
+
+// Saber si el usuario ha cambiado la fecha respecto a la actual
+const isCustomDate = computed(() => {
+  return (
+    parseInt(selectedMonth.value) !== dateStore.month ||
+    parseInt(selectedYear.value) !== dateStore.year
+  )
 })
 
 const checkMonthlyBalance = async () => {
@@ -105,19 +121,23 @@ const addExpense = async () => {
   }
 
   try {
+    // Determinar el día: si es fecha personalizada, usar 1, si no, usar el día actual
+    const dayToUse = isCustomDate.value ? 1 : dateStore.day
     const expenseAmount = parseFloat(inputAmount.value)
 
     // Guardar el gasto en la colección 'expenses'
     await addDoc(collection(db, 'expenses'), {
-      month: dateStore.month,
-      year: dateStore.year,
-      day: dateStore.day,
+      month: parseInt(selectedMonth.value),
+      year: parseInt(selectedYear.value),
+      day: dayToUse,
       type: selectedExpenseType.value,
       amount: expenseAmount,
       userId: userStore.user, // Guardar el userId
     })
 
-    amount.value -= expenseAmount // Actualizar el balance
+    if (!isCustomDate.value) {
+      amount.value -= expenseAmount // Actualizar el balance
+    }
 
     alert('Gasto añadido correctamente.')
     inputAmount.value = '' // Limpiar el input después de añadir
@@ -170,12 +190,30 @@ onMounted(async () => {
     <Header />
     <main class="flex-grow flex items-center justify-center relative">
       <!-- Mostrar la fecha en la esquina superior derecha -->
-      <h3
-        class="absolute text-xl font-semibold"
+      <div
+        class="absolute flex gap-2 items-center"
         style="top: 15%; right: 5%; transform: translateY(-50%);"
       >
-        {{ formattedDate }}
-      </h3>
+        <select
+          v-model="selectedMonth"
+          @change="handleDateChange"
+          class="border border-gray-300 rounded p-1"
+        >
+          <option v-for="month in months" :key="month" :value="month">
+            {{ month }}
+          </option>
+        </select>
+        <span>/</span>
+        <select
+          v-model="selectedYear"
+          @change="handleDateChange"
+          class="border border-gray-300 rounded p-1"
+        >
+          <option v-for="year in years" :key="year" :value="year">
+            {{ year }}
+          </option>
+        </select>
+      </div>
 
       <!-- Mostrar el importe en el tercio superior -->
       <h1
