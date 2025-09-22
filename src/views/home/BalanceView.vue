@@ -5,6 +5,32 @@
     <main class="flex-grow flex flex-col items-center gap-8 pt-8">
       <h1 class="text-2xl font-bold">Balance Mensual</h1>
 
+      <!-- Mostrar la fecha en la esquina superior derecha -->
+      <div
+        class="absolute flex gap-2 items-center"
+        style="top: 15%; right: 5%; transform: translateY(-50%);"
+      >
+        <select
+          v-model="selectedMonth"
+          @change="handleDateChange"
+          class="border border-gray-300 rounded p-1"
+        >
+          <option v-for="month in months" :key="month" :value="month">
+            {{ month }}
+          </option>
+        </select>
+        <span>/</span>
+        <select
+          v-model="selectedYear"
+          @change="handleDateChange"
+          class="border border-gray-300 rounded p-1"
+        >
+          <option v-for="year in years" :key="year" :value="year">
+            {{ year }}
+          </option>
+        </select>
+      </div>
+
       <!-- Gráfico circular -->
       <div v-if="chartData" class="w-[90%] max-w-md">
         <DoughnutChart :chart-data="chartData" />
@@ -45,6 +71,20 @@ const expenses = ref([]) // Lista de gastos
 const dateStore = useDateStore()
 const userStore = useUserStore()
 
+// Opciones de mes y año para los selectores
+const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'))
+const currentYear = new Date().getFullYear()
+const years = [currentYear - 1, currentYear, currentYear + 1]
+
+// Estado local para los selectores de mes y año
+const selectedMonth = ref(dateStore.month ? dateStore.month.toString().padStart(2, '0') : months[0])
+const selectedYear = ref(dateStore.year ? dateStore.year : currentYear)
+
+// Computed para mostrar la fecha seleccionada en formato MM/YYYY
+const formattedDate = computed(() => {
+  return `${selectedMonth.value}/${selectedYear.value}`
+})
+
 // Computed para ordenar los gastos por fecha (del día 1 hacia arriba)
 const sortedExpenses = computed(() => {
   return expenses.value.sort((a, b) => new Date(a.date) - new Date(b.date))
@@ -54,8 +94,8 @@ const fetchExpenses = async () => {
   try {
     const q = query(
       collection(db, 'expenses'),
-      where('month', '==', dateStore.month),
-      where('year', '==', dateStore.year),
+      where('month', '==', parseInt(selectedMonth.value)),
+      where('year', '==', parseInt(selectedYear.value)),
       where('userId', '==', userStore.user), // Filtrar por userId
       orderBy('day', 'desc') // Ordenar por fecha ascendente
     )
@@ -106,6 +146,10 @@ const fetchExpenses = async () => {
   } catch (error) {
     console.error('Error al obtener los gastos:', error)
   }
+}
+
+const handleDateChange = () => {
+  fetchExpenses()
 }
 
 onMounted(() => {

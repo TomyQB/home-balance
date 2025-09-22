@@ -9,7 +9,10 @@ const auth = getAuth()
 const login = async () => {
   try {
     const user = await signInWithGoogle()
-    if (user.email === 'lafarmacia47@gmail.com' || user.email === 'montialvo@gmail.com' || user.email === 'josemanuelc1b@gmail.com') {
+    if (user.email === 'lafarmacia47@gmail.com'
+      || user.email === 'montialvo@gmail.com'
+      || user.email === 'josemanuelc1b@gmail.com'
+      || user.email === 'felipemu.rodriguez@@gmail.com') {
       // Login permitido
       console.log('Bienvenido:', user.displayName)
       router.push({ name: 'home' }) // Redirige a la página de lista de revisiones
