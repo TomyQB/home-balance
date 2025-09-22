@@ -14,7 +14,7 @@ export const useUserStore = defineStore('user', {
             this.user = 1 // Usuario autenticado
           } else if (user.email === 'josemanuelc1b@gmail.com') {
             this.user = 2 // Usuario autenticado pero no es el administrador
-          } else if (user.email === 'felipemu.rodriguez@@gmail.com') {
+          } else if (user.email === 'felipemu.rodriguez@gmail.com') {
             this.user = 3; // Usuario autenticado pero no es el administrador
           }
           console.log('Usuario autenticado:', user.email) // Depuración: Verificar el usuario autenticado
