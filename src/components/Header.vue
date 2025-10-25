@@ -6,16 +6,23 @@
         <span class="text-sm font-semibold">Casa</span>
       </router-link>
   
-      <!-- Botón de Farmacia -->
-      <router-link to="/farmacia" class="header-item">
-        <span>➕</span>
-        <span class="text-sm font-semibold">Farmacia</span>
-      </router-link>
+          <!-- Botón de Farmacia (solo usuario 1) -->
+          <router-link
+            v-if="userStore.user === 1"
+            to="/farmacia"
+            class="header-item"
+          >
+            <span>➕</span>
+            <span class="text-sm font-semibold">Farmacia</span>
+          </router-link>
     </header>
   </template>
   
   <script setup>
   import { RouterLink } from 'vue-router'
+  import { useUserStore } from '../stores/useUserStore'
+
+  const userStore = useUserStore()
   </script>
   
   <style scoped>

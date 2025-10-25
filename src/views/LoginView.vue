@@ -12,7 +12,9 @@ const login = async () => {
     if (user.email === 'lafarmacia47@gmail.com'
       || user.email === 'montialvo@gmail.com'
       || user.email === 'josemanuelc1b@gmail.com'
-      || user.email === 'felipemu.rodriguez@gmail.com') {
+      || user.email === 'felipemu.rodriguez@gmail.com'
+      || user.email === 'cristinadelgadogonzalvez@gmail.com'
+      || user.email === 'nacho.victoria.sanes77@gmail.com') {
       // Login permitido
       console.log('Bienvenido:', user.displayName)
       router.push({ name: 'home' }) // Redirige a la página de lista de revisiones
